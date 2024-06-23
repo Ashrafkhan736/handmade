@@ -8,11 +8,12 @@
                 "/Zi",
                 "/EHsc",
                 "/nologo",
-                "/Fe${fileDirname}..\\..\\..\\build\\${fileBasenameNoExtension}.exe",
-                "/Fo${fileDirname}..\\..\\..\\build\\",
-                "/Fd${fileDirname}..\\..\\..\\build\\",
+                "/Fe${fileDirname}..\\build\\${fileBasenameNoExtension}.exe",
+                "/Fo${fileDirname}..\\build\\",
+                "/Fd${fileDirname}..\\build\\",
                 "${file}",
                 "user32.lib",
+                "gdi32.lib",
             ],
             "options": {
                 "cwd": "${fileDirname}"
