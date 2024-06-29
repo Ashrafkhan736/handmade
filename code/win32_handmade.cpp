@@ -22,6 +22,7 @@ LRESULT CALLBACK MainWindowCallback(
     break;
     case WM_CLOSE:
     {
+        PostQuitMessage(0);
         OutputDebugStringA("WM_CLOSE\n");
     }
     break;
@@ -67,17 +68,16 @@ int CALLBACK WinMain(
     int ShowCode)
 
 {
-    WNDCLASS WindowClass = {};
-    WindowClass.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
+    WNDCLASSA WindowClass = {};
     WindowClass.lpfnWndProc = MainWindowCallback;
     WindowClass.hInstance = Instance;
     // WindowClass.hIcon=;
     WindowClass.hCursor = 0;
     WindowClass.lpszClassName = "HandmadeHeroWindowClass";
     // MessageBoxA(0, "This is a handmade hero", "Handmade hero", MB_OK | MB_ICONINFORMATION);
-    if (RegisterClass(&WindowClass))
+    if (RegisterClassA(&WindowClass))
     {
-        HWND WindowHandle = CreateWindowEx(
+        HWND WindowHandle = CreateWindowExA(
             0,
             WindowClass.lpszClassName,
             "Handmade Hero",
@@ -94,7 +94,7 @@ int CALLBACK WinMain(
         {
             for(;;){
                 MSG Message;
-                BOOL MessageResult = GetMessage(&Message, 0, 0, 0);
+                BOOL MessageResult = GetMessageA(&Message, 0, 0, 0);
                 if(MessageResult > 0){
                     TranslateMessage(&Message);
                     DispatchMessage(&Message);
