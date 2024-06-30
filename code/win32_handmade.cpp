@@ -25,14 +25,14 @@ global_variable int BitmapWidth;
 global_variable int BitmapHeight;
 global_variable int BytesPerPixel = 4;
 
-internal void RenderWeirdGradient(int XOffset, int YOffset) {
+internal void RenderWeirdGradient(int BlueOffset, int GreenOffset) {
   int Pitch = BitmapWidth * BytesPerPixel;
   unit8 *Row = (unit8 *)BitmapMemory;
   for (int Y = 0; Y < BitmapHeight; Y++) {
     unit32 *Pixel = (unit32 *)Row;
     for (int X = 0; X < BitmapWidth; X++) {
-      unit8 Blue = (X + XOffset);
-      unit8 Green = (Y + YOffset);
+      unit8 Blue = (X + BlueOffset);
+      unit8 Green = (Y + GreenOffset);
       *Pixel++ = ((Green << 8) | Blue);
     }
     Row += Pitch;
@@ -55,8 +55,6 @@ internal void Win32ResizeDIBSection(int Width, int Height) {
   int BytesPerPixel = 4;
   int BitmapMemorySize = BitmapWidth * BitmapHeight * BytesPerPixel;
   BitmapMemory = VirtualAlloc(0, BitmapMemorySize, MEM_COMMIT, PAGE_READWRITE);
-
-  RenderWeirdGradient(0, 0);
 }
 
 internal void Win32UpdateWindow(HDC DeviceContext, RECT *WindowRect, int X,
@@ -116,6 +114,10 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance,
 
 {
   WNDCLASSA WindowClass = {};
+  // The following styles tell window to redraw the whole window if the size
+  // changes and the last flag is to make sure that every window has its own
+  // device context
+  WindowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
   WindowClass.lpfnWndProc = MainWindowCallback;
   WindowClass.hInstance = Instance;
   // WindowClass.hIcon=;
@@ -124,20 +126,34 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance,
   // MessageBoxA(0, "This is a handmade hero", "Handmade hero", MB_OK |
   // MB_ICONINFORMATION);
   if (RegisterClassA(&WindowClass)) {
-    HWND WindowHandle = CreateWindowExA(
-        0, WindowClass.lpszClassName, "Handmade Hero",
-        WS_OVERLAPPEDWINDOW | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT,
-        CW_USEDEFAULT, CW_USEDEFAULT, 0, 0, Instance, 0);
-    if (WindowHandle) {
+    HWND Window = CreateWindowExA(0, WindowClass.lpszClassName, "Handmade Hero",
+                                  WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                                  CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+                                  CW_USEDEFAULT, 0, 0, Instance, 0);
+    if (Window) {
+      int XOffset = 0;
+      int YOffset = 0;
       while (Running) {
         MSG Message;
-        BOOL MessageResult = GetMessageA(&Message, 0, 0, 0);
-        if (MessageResult > 0) {
+        while (PeekMessage(&Message, 0, 0, 0, PM_REMOVE)) {
+          if (Message.message == WM_QUIT) {
+            Running = false;
+          }
           TranslateMessage(&Message);
           DispatchMessage(&Message);
-        } else {
-          break;
+          RenderWeirdGradient(XOffset, YOffset);
         }
+
+        HDC DeviceContext = GetDC(Window);
+        RECT ClientRect;
+        GetClientRect(Window, &ClientRect); // Get the size of the window
+        int WindowWidth = ClientRect.right - ClientRect.left;
+        int WindowHeight = ClientRect.bottom - ClientRect.top;
+        Win32UpdateWindow(DeviceContext, &ClientRect, 0, 0, WindowWidth,
+                          WindowHeight);
+        ReleaseDC(Window, DeviceContext); // Release the device context
+        ++XOffset;
+        ++YOffset;
       }
     } else {
       // TODO: log error
