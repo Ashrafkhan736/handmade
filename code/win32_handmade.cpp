@@ -92,10 +92,6 @@ LRESULT CALLBACK MainWindowCallback(HWND Window, UINT Message, WPARAM WParam,
                                     LPARAM LParam) {
   LRESULT Result = 0;
   switch (Message) {
-  case WM_SIZE: {
-    win32_window_dimension Dimension = Win32GetWindowDimension(Window);
-    Win32ResizeDIBSection(&GlobalBackBuffer, Dimension.Width, Dimension.Height);
-  } break;
   case WM_DESTROY: {
     Running = false;
     OutputDebugStringA("WM_DESTROY\n");
@@ -127,6 +123,7 @@ int CALLBACK WinMain(HINSTANCE Instance, HINSTANCE PrevInstance,
                      LPSTR CommandLine, int ShowCode)
 
 {
+  Win32ResizeDIBSection(&GlobalBackBuffer, 1280, 720);
   WNDCLASSA WindowClass = {};
   // The following styles tell window to redraw the whole window if the size
   // changes and the last flag is to make sure that every window has its own
